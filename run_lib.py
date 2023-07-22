@@ -10,9 +10,10 @@ import torch.distributed as dist
 from utils.optim import get_optim
 from utils.utils import seed_everything
 from torch.utils.tensorboard import SummaryWriter
-from models.model_utils import MyModel
 from models.ema import ExponentialMovingAverage
 from utils.utils import AverageMeter
+from models.model_utils import get_arch
+from models.loss import get_loss_fn
 
 def train(config, workdir, train_dir='train'):
     """Runs the training pipeline.
@@ -91,9 +92,8 @@ def train(config, workdir, train_dir='train'):
     if rank == 0:
         logger.info('Begin model initialization...')
 
-    model = MyModel()
-
-    # model = nn.SyncBatchNorm.convert_sync_batchnorm(model)
+    model = get_arch(config)
+    model = nn.SyncBatchNorm.convert_sync_batchnorm(model)
     # If model has BNs...
 
     model = model.cuda()
@@ -121,7 +121,7 @@ def train(config, workdir, train_dir='train'):
         logger.info('Handling optimizations...')
 
     optimizer, scheduler = get_optim(model, config)
-    criterion = nn.CosineSimilarity(dim=1).cuda()
+    criterion = get_loss_fn(config)
 
     if rank == 0:
         logger.info('Completed.')
