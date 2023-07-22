@@ -1,0 +1,8 @@
+absl==0.0
+absl_py==1.4.0
+einops==0.6.1
+ml_collections==0.1.1
+numpy==1.22.3
+timm==0.6.13
+torch==2.0.0
+torch_dwconv==0.1.0
