@@ -20,7 +20,7 @@ def main(argv):
     if FLAGS.workdir is not None:
         work_dir = os.path.join('workspace', FLAGS.workdir)
     else:
-        name_idx = [config.data.mask, 'batch' + str(config.training.batch_size), 'known' + str(config.data.num_known)]
+        name_idx = [config.model.arch, config.data.mask, 'batch' + str(config.training.batch_size), 'known' + str(config.data.num_known)]
         work_dir = os.path.join('workspace', f"run_{'_'.join(name_idx)}")
 
     if FLAGS.mode == 'train':
