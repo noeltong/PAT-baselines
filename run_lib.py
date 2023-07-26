@@ -18,7 +18,7 @@ from utils.utils import min_max_scaler
 from utils.eval import get_metric_fn
 
 
-def train(args, train_dir='train'):
+def train(args, work_dir):
     """Runs the training pipeline.
 
     Args:
@@ -27,8 +27,7 @@ def train(args, train_dir='train'):
     """
 
     torch.backends.cudnn.benchmark = True
-    workdir = os.path.join(args.work_dir, args.mask, str(args.num_known))
-    workdir = os.path.join(workdir, train_dir)
+    workdir = os.path.join(work_dir, 'train', args.data.mask, str(args.data.num_known))
 
     # -------------------
     # Initialize DDP
@@ -47,7 +46,7 @@ def train(args, train_dir='train'):
 
     os.environ['CUBLAS_WORKSPACE_CONFIG'] = ':4096:8'
     torch.backends.cudnn.deterministic = True
-    torch.use_deterministic_algorithms(True)
+    torch.use_deterministic_algorithms(True, warn_only=True)
 
     # -----------------------------
     # Create directories for data
@@ -120,7 +119,7 @@ def train(args, train_dir='train'):
     if rank == 0:
         logger.info('Handling optimizations...')
 
-    optimizer, scheduler = get_optim(args)
+    optimizer, scheduler = get_optim(model, args)
     criterion = get_loss_fn(args)
 
     if rank == 0:
@@ -140,7 +139,7 @@ def train(args, train_dir='train'):
     dist.barrier()
     torch.cuda.empty_cache()
 
-    for epoch in range(args.num_epochs):
+    for epoch in range(args.training.num_epochs):
         train_sampler.set_epoch(epoch)
         test_sampler.set_epoch(epoch)
         model.train()
@@ -166,7 +165,7 @@ def train(args, train_dir='train'):
                                   epoch * iters_per_epoch + i)
 
             logger.info(
-                f'Epoch: {epoch + 1}/{args.num_epochs}, Iter: {i + 1}/{iters_per_epoch}, Loss: {train_loss_epoch.val:.6f}, Device: {rank}')
+                f'Epoch: {epoch + 1}/{args.training.num_epochs}, Iter: {i + 1}/{iters_per_epoch}, Loss: {train_loss_epoch.val:.6f}, Device: {rank}')
 
             optimizer.zero_grad()
             scaler.scale(loss).backward()
@@ -179,10 +178,10 @@ def train(args, train_dir='train'):
         dist.barrier()
         if rank == 0:
             logger.info(
-                f'Epoch: {epoch + 1}/{args.num_epochs}, Avg loss: {train_loss_epoch.avg:.4f}, Time: {time_logger.time_length()}')
+                f'Epoch: {epoch + 1}/{args.training.num_epochs}, Avg loss: {train_loss_epoch.avg:.4f}, Time: {time_logger.time_length()}')
 
         # save snapshot periodically
-        if (epoch + 1) % args.snap_freq == 0:
+        if (epoch + 1) % args.training.save_ckpt_freq == 0:
             states = model.state_dict()
             if rank == 0:
                 logger.info(f'Saving snapshot at epoch {epoch + 1}')
@@ -190,7 +189,7 @@ def train(args, train_dir='train'):
                     ckpt_dir, f'{epoch+1}_loss_{train_loss_epoch.avg:.2f}.pth'))
 
         # Report loss on eval dataset periodically
-        if (epoch + 1) % args.eval_freq == 0:
+        if (epoch + 1) % args.training.eval_freq == 0:
             if rank == 0:
                 logger.info(f'Start evaluate at epoch {epoch + 1}.')
 
@@ -216,7 +215,7 @@ def train(args, train_dir='train'):
 
                     eval_loss_epoch.update(loss.item(), x.shape[0])
                     logger.info(
-                        f'Epoch: {epoch + 1}/{args.num_epochs}, Iter: {i + 1}/{iters_per_eval}, Loss: {eval_loss_epoch.val:.6f}, Time: {time_logger.time_length()}, PSNR: {eval_psnr_epoch.val}, SSIM: {eval_ssim_epoch.val}, Device: {rank}')
+                        f'Epoch: {epoch + 1}/{args.training.num_epochs}, Iter: {i + 1}/{iters_per_eval}, Loss: {eval_loss_epoch.val:.6f}, Time: {time_logger.time_length()}, PSNR: {eval_psnr_epoch.val}, SSIM: {eval_ssim_epoch.val}, Device: {rank}')
 
                 if rank == 0:
                     writer.add_scalar('Eval/Eval loss', eval_loss_epoch.avg, epoch)
@@ -225,7 +224,7 @@ def train(args, train_dir='train'):
 
                 if rank == 0:
                     logger.info(
-                        f'Epoch: {epoch + 1}/{args.num_epochs}, Avg eval loss: {eval_loss_epoch.avg:.4f}, PSNR: {eval_psnr_epoch.avg}, SSIM: {eval_ssim_epoch.avg}.')
+                        f'Epoch: {epoch + 1}/{args.training.num_epochs}, Avg eval loss: {eval_loss_epoch.avg:.4f}, PSNR: {eval_psnr_epoch.avg}, SSIM: {eval_ssim_epoch.avg}.')
 
         dist.barrier()
 
@@ -236,7 +235,7 @@ def train(args, train_dir='train'):
         torch.save(states, os.path.join(ckpt_dir, 'final.pth'))
 
 
-def eval(args, eval_dir='eval'):
+def eval(args, work_dir):
     """Runs the evaluation pipeline.
 
     Args:
@@ -245,8 +244,13 @@ def eval(args, eval_dir='eval'):
     """
 
     torch.backends.cudnn.benchmark = True
-    workdir = args.work_dir
-    workdir = os.path.join(workdir, eval_dir)
+
+    # -----------------------------
+    # Create directories for data
+    # -----------------------------
+
+    ckpt_dir = os.path.join(workdir, 'train', args.data.mask, str(args.data.num_known), 'ckpt')
+    workdir = os.path.join(work_dir, 'eval', args.data.mask, str(args.data.num_known))
 
     # -------------------
     # Initialize DDP
@@ -267,16 +271,6 @@ def eval(args, eval_dir='eval'):
         os.environ['CUBLAS_WORKSPACE_CONFIG'] = ':4096:8'
         torch.backends.cudnn.deterministic = True
         torch.use_deterministic_algorithms(True)
-
-    # -----------------------------
-    # Create directories for data
-    # -----------------------------
-
-    log_dir = os.path.join(workdir, 'tensorboard')
-    ckpt_dir = os.path.join(workdir, 'ckpt')
-
-    os.makedirs(log_dir, exist_ok=True)
-    os.makedirs(ckpt_dir, exist_ok=True)
 
     # -------------------
     # Loggers
@@ -340,22 +334,3 @@ def eval(args, eval_dir='eval'):
         
         with torch.inference_mode():
             out = model
-
-def main(args):
-    if args.mode == 'train':
-        train(args)
-    elif args.mode == 'eval':
-        eval(args)
-
-
-# def launch(args):
-#     if args.mode == 'train':
-#         for args.mask in ['limited', 'uniform', 'random']:
-#             for args.num_known in [16, 32, 64]:
-#                 train(args)
-#     elif args.mode == 'eval':
-#         eval(args)
-
-if __name__ == '__main__':
-    args = get_args()
-    main(args)
