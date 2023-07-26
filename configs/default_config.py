@@ -12,8 +12,9 @@ def get_config():
     training = cfg.training = ConfigDict()
     training.num_epochs = 100
     training.batch_size = 32
-    training.save_ckpt_freq = 10
+    training.save_ckpt_freq = 50
     training.eval_freq = 10
+    training.rescale = True
 
     # ----------------
     # Model
@@ -31,7 +32,6 @@ def get_config():
     optim.optimizer = 'RAdam'
     optim.schedule = 'CosineAnnealingLR'
     optim.loss = 'MSELoss'
-    optim.grad_clip = 1.
     optim.initial_lr = 0.0005
     optim.weight_decay = 0.0001
     optim.min_lr = 0.001 * optim.initial_lr
