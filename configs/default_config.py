@@ -21,16 +21,14 @@ def get_config():
 
     model = cfg.model = ConfigDict()
     model.clip_grad_norm = 1.
-    model.ema = True
-    model.ema_rate = 0.999
-    model.ema_steps = 1
+    model.arch = 'Uformer'
 
     # ----------------
     # Optimization
     # ----------------
 
     cfg.optim = optim = ConfigDict()
-    optim.optimizer = 'AdamW'
+    optim.optimizer = 'RAdam'
     optim.schedule = 'CosineAnnealingLR'
     optim.loss = 'MSELoss'
     optim.grad_clip = 1.
@@ -46,6 +44,7 @@ def get_config():
     cfg.data = data = ConfigDict()
     data.num_workers = 2
     data.prefetch_factor = 1
+    data.data_dir = '/root/data/mice/npy/train'
 
     cfg.seed = 42
     cfg.distributed = True
