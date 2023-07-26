@@ -8,7 +8,7 @@ from torch.nn import init
 '''
 class UNet_3Plus(nn.Module):
 
-    def __init__(self, in_channels=3, n_classes=1, feature_scale=4, is_deconv=True, is_batchnorm=True):
+    def __init__(self, in_channels=1, out_channels=1, feature_scale=4, is_deconv=True, is_batchnorm=True):
         super(UNet_3Plus, self).__init__()
         self.is_deconv = is_deconv
         self.in_channels = in_channels
@@ -178,7 +178,7 @@ class UNet_3Plus(nn.Module):
         self.relu1d_1 = nn.ReLU(inplace=True)
 
         # output
-        self.outconv1 = nn.Conv2d(self.UpChannels, n_classes, 3, padding=1)
+        self.outconv1 = nn.Conv2d(self.UpChannels, out_channels, 3, padding=1)
 
         # initialise weights
         for m in self.modules():
@@ -236,14 +236,14 @@ class UNet_3Plus(nn.Module):
         hd1 = self.relu1d_1(self.bn1d_1(self.conv1d_1(
             torch.cat((h1_Cat_hd1, hd2_UT_hd1, hd3_UT_hd1, hd4_UT_hd1, hd5_UT_hd1), 1)))) # hd1->320*320*UpChannels
 
-        d1 = self.outconv1(hd1)  # d1->320*320*n_classes
+        d1 = self.outconv1(hd1)  # d1->320*320*out_channels
         return F.sigmoid(d1)
     
 '''
     UNet 3+ with deep supervision
 '''
 class UNet_3Plus_DeepSup(nn.Module):
-    def __init__(self, in_channels=3, n_classes=1, feature_scale=4, is_deconv=True, is_batchnorm=True):
+    def __init__(self, in_channels=1, out_channels=1, feature_scale=4, is_deconv=True, is_batchnorm=True):
         super(UNet_3Plus_DeepSup, self).__init__()
         self.is_deconv = is_deconv
         self.in_channels = in_channels
@@ -420,11 +420,11 @@ class UNet_3Plus_DeepSup(nn.Module):
         self.upscore2 = nn.Upsample(scale_factor=2, mode='bilinear')
 
         # DeepSup
-        self.outconv1 = nn.Conv2d(self.UpChannels, n_classes, 3, padding=1)
-        self.outconv2 = nn.Conv2d(self.UpChannels, n_classes, 3, padding=1)
-        self.outconv3 = nn.Conv2d(self.UpChannels, n_classes, 3, padding=1)
-        self.outconv4 = nn.Conv2d(self.UpChannels, n_classes, 3, padding=1)
-        self.outconv5 = nn.Conv2d(filters[4], n_classes, 3, padding=1)
+        self.outconv1 = nn.Conv2d(self.UpChannels, out_channels, 3, padding=1)
+        self.outconv2 = nn.Conv2d(self.UpChannels, out_channels, 3, padding=1)
+        self.outconv3 = nn.Conv2d(self.UpChannels, out_channels, 3, padding=1)
+        self.outconv4 = nn.Conv2d(self.UpChannels, out_channels, 3, padding=1)
+        self.outconv5 = nn.Conv2d(filters[4], out_channels, 3, padding=1)
 
         # initialise weights
         for m in self.modules():
@@ -502,7 +502,7 @@ class UNet_3Plus_DeepSup(nn.Module):
 '''
 class UNet_3Plus_DeepSup_CGM(nn.Module):
 
-    def __init__(self, in_channels=3, n_classes=1, feature_scale=4, is_deconv=True, is_batchnorm=True):
+    def __init__(self, in_channels=1, out_channels=1, feature_scale=4, is_deconv=True, is_batchnorm=True):
         super(UNet_3Plus_DeepSup_CGM, self).__init__()
         self.is_deconv = is_deconv
         self.in_channels = in_channels
@@ -679,11 +679,11 @@ class UNet_3Plus_DeepSup_CGM(nn.Module):
         self.upscore2 = nn.Upsample(scale_factor=2, mode='bilinear')
 
         # DeepSup
-        self.outconv1 = nn.Conv2d(self.UpChannels, n_classes, 3, padding=1)
-        self.outconv2 = nn.Conv2d(self.UpChannels, n_classes, 3, padding=1)
-        self.outconv3 = nn.Conv2d(self.UpChannels, n_classes, 3, padding=1)
-        self.outconv4 = nn.Conv2d(self.UpChannels, n_classes, 3, padding=1)
-        self.outconv5 = nn.Conv2d(filters[4], n_classes, 3, padding=1)
+        self.outconv1 = nn.Conv2d(self.UpChannels, out_channels, 3, padding=1)
+        self.outconv2 = nn.Conv2d(self.UpChannels, out_channels, 3, padding=1)
+        self.outconv3 = nn.Conv2d(self.UpChannels, out_channels, 3, padding=1)
+        self.outconv4 = nn.Conv2d(self.UpChannels, out_channels, 3, padding=1)
+        self.outconv5 = nn.Conv2d(filters[4], out_channels, 3, padding=1)
 
         self.cls = nn.Sequential(
                     nn.Dropout(p=0.5),
