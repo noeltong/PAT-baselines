@@ -59,17 +59,21 @@ class data_prefetcher():
 class PATDataset(Dataset):
     def __init__(self, path) -> None:
         super().__init__()
-        self.paths = glob(os.path.join(path, '*.npz'))
+        paths = glob(os.path.join(path, '*.npz'))
+        self.data = []
+        for path in paths:
+            idx = np.load(path)
+            self.data.append([idx['sinogram'], idx['gt']])
 
     def __getitem__(self, index):
-        data = np.load(self.paths[index])
-        sinogram = data['sinogram'].astype(np.float32)
-        gt = data['gt'][None, ...].astype(np.float32)
+        sinogram, gt = self.data[index]
+        sinogram = sinogram.astype(np.float32)
+        gt = gt[None, ...].astype(np.float32)
 
         return sinogram, gt
     
     def __len__(self):
-        return len(self.paths)
+        return len(self.data)
 
 
 def load_data(args):
