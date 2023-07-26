@@ -11,7 +11,7 @@ def get_config():
 
     training = cfg.training = ConfigDict()
     training.num_epochs = 100
-    training.batch_size = 64
+    training.batch_size = 32
     training.save_ckpt_freq = 10
     training.eval_freq = 10
 
@@ -21,7 +21,7 @@ def get_config():
 
     model = cfg.model = ConfigDict()
     model.clip_grad_norm = 1.
-    model.arch = 'Uformer'
+    model.arch = 'UNet_3P'
 
     # ----------------
     # Optimization
@@ -45,9 +45,13 @@ def get_config():
     data.num_workers = 2
     data.prefetch_factor = 1
     data.data_dir = '/root/data/mice/npy/train'
+    data.num_known = 32
+    data.mask = 'random_mask'
+    data.resolution = 128
+    data.len_sig = 1000
+    data.num_sig = 128
 
     cfg.seed = 42
-    cfg.distributed = True
     cfg.use_deterministic_algorithms = True
     cfg.debug = False
 
