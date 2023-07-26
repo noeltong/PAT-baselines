@@ -65,6 +65,7 @@ class PATDataset(Dataset):
         data = np.load(self.paths[index])
         sinogram = data['sinogram'].astype(np.float32)
         gt = data['gt'][None, ...].astype(np.float32)
+
         return sinogram, gt
     
     def __len__(self):
