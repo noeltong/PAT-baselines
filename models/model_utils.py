@@ -6,7 +6,7 @@ def get_arch(arch):
     if arch == 'UNet':
         model = UNet(dim=64)
     elif arch == 'Uformer':
-        model = Uformer(img_size=128, embed_dim=32, win_size=8, token_projection='linear', token_mlp='leff', modulator=True)
+        model = Uformer(img_size=128, embed_dim=64, win_size=8, token_projection='linear', token_mlp='leff', modulator=True)
     elif arch == 'Uformer_T':
         model = Uformer(img_size=128, embed_dim=16, win_size=8, token_projection='linear', token_mlp='leff', modulator=True)
     elif arch == 'Uformer_S':
