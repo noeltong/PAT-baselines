@@ -1,5 +1,4 @@
 from run_lib import train, eval
-import datetime
 import os
 from absl import app, flags
 from ml_collections.config_flags import config_flags
@@ -21,13 +20,13 @@ def main(argv):
     if FLAGS.workdir is not None:
         work_dir = os.path.join('workspace', FLAGS.workdir)
     else:
-        time_str = datetime.datetime.strftime(datetime.datetime.now(), "%Y_%m_%d_%H_%M_%S")
-        work_dir = os.path.join('workspace', f'run_{time_str}')
+        name_idx = [config.data.mask, 'batch' + str(config.training.batch_size), 'known' + str(config.data.num_known)]
+        work_dir = os.path.join('workspace', f"run_{'_'.join(name_idx)}")
 
     if FLAGS.mode == 'train':
-        train(config=config, workdir=work_dir)
+        train(args=config, work_dir=work_dir)
     elif FLAGS.mode == 'eval':
-        eval(config=config, workdir=work_dir)
+        eval(args=config, work_dir=work_dir)
 
 
 if __name__ == '__main__':
