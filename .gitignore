@@ -161,3 +161,4 @@ cython_debug/
 
 workspace/
 .vscode/
+run.sh
