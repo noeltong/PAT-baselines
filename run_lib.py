@@ -74,6 +74,9 @@ def train(args, work_dir):
     sh.setFormatter(formatter)
     logger.addHandler(fh)
 
+    if rank == 0:
+        logger.info(f'Work files stored in {workdir}.')
+
     # -------------------
     # Load data
     # -------------------
@@ -104,6 +107,7 @@ def train(args, work_dir):
         logger.info('Begin model initialization...')
 
     model = get_arch(args.model.arch)
+    model = nn.SyncBatchNorm.convert_sync_batchnorm(model)
     model = model.cuda()
     model = DistributedDataParallel(model, device_ids=[rank])
 
@@ -155,6 +159,12 @@ def train(args, work_dir):
         for i, (x, y) in enumerate(train_loader):
             x, y = x.float().cuda(non_blocking=True), y.float().cuda(non_blocking=True)
             x = DAS.signal_to_image(mask_fn(x))
+
+            # rescale data to [-1, 1] for faster convergence
+            if args.training.rescale == True:
+                x = min_max_scaler(x) / 0.5 - 1
+                y = min_max_scaler(y) / 0.5 - 1
+
             with torch.cuda.amp.autocast(enabled=True):
                 out = model(x)
                 loss = criterion(out, y)
@@ -203,6 +213,11 @@ def train(args, work_dir):
                 for i, (x, y) in enumerate(test_loader):
                     x, y = x.float().cuda(non_blocking=True), y.float().cuda(non_blocking=True)
                     x = DAS.signal_to_image(mask_fn(x))
+
+                    if args.training.rescale == True:
+                        x = min_max_scaler(x) / 0.5 - 1
+                        y = min_max_scaler(y) / 0.5 - 1
+                        
                     with torch.cuda.amp.autocast(enabled=True):
                         out = model(x)
                         loss = criterion(out, y)
