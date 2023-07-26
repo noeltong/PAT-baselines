@@ -5,7 +5,7 @@ import piq
 
 
 def get_metric_fn(args):
-    img_size = args.image_size
+    img_size = args.data.resolution
     mask = Image.new('L', (img_size, img_size), 0)
     draw = ImageDraw.Draw(mask)
     draw.pieslice([0, 0, img_size, img_size], 0, 360, fill=255)

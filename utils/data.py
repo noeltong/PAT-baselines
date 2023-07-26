@@ -72,9 +72,9 @@ class PATDataset(Dataset):
 
 
 def load_data(args):
-    dataset = PATDataset()
+    dataset = PATDataset(path=args.data.data_dir)
     train_set, test_set = random_split(
-        dataset, [9, 1]
+        dataset, [0.9, 0.1]
     )
     train_sampler = DistributedSampler(train_set)
     test_sampler = DistributedSampler(test_set)
@@ -131,12 +131,13 @@ def limited_view(x, axis=2, n_keep=32):
 @torch.no_grad()
 def get_mask_fn(args):
     mask_type = args.data.mask
-    def mask_fn(x, axis=-1, n_keep=args.data.num_known):
-        if mask_type == 'uniform':
+    n_keep=args.data.num_known
+    def mask_fn(x, axis=-1):
+        if mask_type == 'uniform_mask':
             mask = uniform_mask(x, axis, n_keep)
-        elif mask_type == 'random':
+        elif mask_type == 'random_mask':
             mask = random_mask(x, axis, n_keep)
-        elif mask_type == 'limited':
+        elif mask_type == 'limited_view':
             mask = limited_view(x, axis, n_keep)
         else:
             raise ValueError(f'Sampling pattern {mask_type} unsupported!')
