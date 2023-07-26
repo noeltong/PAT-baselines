@@ -27,3 +27,10 @@ class AverageMeter(object):
         self.sum += val * n
         self.count += n
         self.avg = self.sum / self.count
+
+
+def min_max_scaler(img):
+    img -= img.min()
+    img /= img.max()
+
+    return img
