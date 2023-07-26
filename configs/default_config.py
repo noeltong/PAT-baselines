@@ -31,7 +31,7 @@ def get_config():
     cfg.optim = optim = ConfigDict()
     optim.optimizer = 'RAdam'
     optim.schedule = 'CosineAnnealingLR'
-    optim.loss = 'MSELoss'
+    optim.loss = 'CharbonnierLoss'
     optim.initial_lr = 0.0005
     optim.weight_decay = 0.0001
     optim.min_lr = 0.001 * optim.initial_lr

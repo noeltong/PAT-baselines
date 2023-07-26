@@ -11,7 +11,7 @@ def get_config():
 
     training = cfg.training
     training.num_epochs = 100
-    training.batch_size = 32
+    training.batch_size = 16
 
     # ----------------
     # Model
@@ -26,9 +26,6 @@ def get_config():
     # ----------------
 
     optim = cfg.optim
-    optim.optimizer = 'RAdam'
-    optim.schedule = 'CosineAnnealingLR'
-    optim.loss = 'MSELoss'
     optim.initial_lr = 2.5e-4
     optim.min_lr = 0
     optim.warmup_epochs = None
