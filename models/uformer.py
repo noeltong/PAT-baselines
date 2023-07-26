@@ -4,47 +4,44 @@ import torch.utils.checkpoint as checkpoint
 from timm.models.layers import DropPath, to_2tuple, trunc_normal_
 import torch.nn.functional as F
 from einops import rearrange, repeat
-from einops.layers.torch import Rearrange
 import math
-import numpy as np
-import time
 from torch import einsum
 
 
-class FastLeFF(nn.Module):
+# class FastLeFF(nn.Module):
     
-    def __init__(self, dim=32, hidden_dim=128, act_layer=nn.GELU,drop = 0.):
-        super().__init__()
+#     def __init__(self, dim=32, hidden_dim=128, act_layer=nn.GELU,drop = 0.):
+#         super().__init__()
 
-        from torch_dwconv import depthwise_conv2d, DepthwiseConv2d
+#         from torch_dwconv import depthwise_conv2d, DepthwiseConv2d
 
-        self.linear1 = nn.Sequential(nn.Linear(dim, hidden_dim),
-                                act_layer())
-        self.dwconv = nn.Sequential(DepthwiseConv2d(hidden_dim, hidden_dim, kernel_size=3,stride=1,padding=1),
-                        act_layer())
-        self.linear2 = nn.Sequential(nn.Linear(hidden_dim, dim))
-        self.dim = dim
-        self.hidden_dim = hidden_dim
+#         self.linear1 = nn.Sequential(nn.Linear(dim, hidden_dim),
+#                                 act_layer())
+#         self.dwconv = nn.Sequential(DepthwiseConv2d(hidden_dim, hidden_dim, kernel_size=3,stride=1,padding=1),
+#                         act_layer())
+#         self.linear2 = nn.Sequential(nn.Linear(hidden_dim, dim))
+#         self.dim = dim
+#         self.hidden_dim = hidden_dim
 
-    def forward(self, x):
-        # bs x hw x c
-        bs, hw, c = x.size()
-        hh = int(math.sqrt(hw))
+#     def forward(self, x):
+#         # bs x hw x c
+#         bs, hw, c = x.size()
+#         hh = int(math.sqrt(hw))
 
-        x = self.linear1(x)
+#         x = self.linear1(x)
 
-        # spatial restore
-        x = rearrange(x, ' b (h w) (c) -> b c h w ', h = hh, w = hh)
-        # bs,hidden_dim,32x32
+#         # spatial restore
+#         x = rearrange(x, ' b (h w) (c) -> b c h w ', h = hh, w = hh)
+#         # bs,hidden_dim,32x32
 
-        x = self.dwconv(x)
+#         x = self.dwconv(x)
 
-        # flaten
-        x = rearrange(x, ' b c h w -> b (h w) c', h = hh, w = hh)
+#         # flaten
+#         x = rearrange(x, ' b c h w -> b (h w) c', h = hh, w = hh)
 
-        x = self.linear2(x)
+#         x = self.linear2(x)
 
-        return x
+#         return x
 
 
 def conv(in_channels, out_channels, kernel_size, bias=False, stride = 1):
@@ -631,8 +628,8 @@ class LeWinTransformerBlock(nn.Module):
         elif token_mlp=='leff':
             self.mlp =  LeFF(dim,mlp_hidden_dim,act_layer=act_layer, drop=drop)
         
-        elif token_mlp=='fastleff':
-            self.mlp =  FastLeFF(dim,mlp_hidden_dim,act_layer=act_layer, drop=drop)    
+        # elif token_mlp=='fastleff':
+        #     self.mlp =  FastLeFF(dim,mlp_hidden_dim,act_layer=act_layer, drop=drop)    
         else:
             raise Exception("FFN error!") 
 
