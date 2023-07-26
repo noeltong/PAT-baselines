@@ -3,14 +3,14 @@ import torch.nn as nn
 import torch.nn.functional as F
 
 
-def get_loss_fn(config):
-    if config.optim.loss == 'MSELoss':
+def get_loss_fn(args):
+    if args.optim.loss == 'MSELoss':
         criterion = nn.MSELoss()
-    elif config.optim.loss == 'L1Loss':
+    elif args.optim.loss == 'L1Loss':
         criterion = nn.L1Loss()
-    elif config.optim.loss == 'TVLoss':
+    elif args.optim.loss == 'TVLoss':
         criterion = TVLoss()
-    elif config.optim.loss == 'CharbonnierLoss':
+    elif args.optim.loss == 'CharbonnierLoss':
         criterion = CharbonnierLoss()
 
     return criterion
