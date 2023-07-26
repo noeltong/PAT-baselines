@@ -208,7 +208,7 @@ def train(args, work_dir):
                         loss = criterion(out, y)
 
                     for n in range(x.shape[0]):
-                        p, s = get_metric(min_max_scaler(out[n, ...].squeeze()), min_max_scaler(y[n, ...].squeeze()))
+                        p, s = get_metric(min_max_scaler(out[n, ...].float().squeeze()), min_max_scaler(y[n, ...].squeeze()))
                         eval_psnr_epoch.update(p)
                         eval_ssim_epoch.update(s)
                     
