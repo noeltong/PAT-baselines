@@ -1,5 +1,10 @@
 import torch
-from torch.utils.data import Dataset, DataLoader
+from torch.utils.data import Dataset, DataLoader, random_split, DistributedSampler
+from torch import nn
+from glob import glob
+import random
+import os
+import numpy as np
 
 
 class data_prefetcher():
@@ -37,6 +42,7 @@ class data_prefetcher():
             #     self.next_input = self.next_input.half()
             # else:
             self.next_input = self.next_input.float()
+            self.next_target = self.next_target.float()
 
     def next(self):
         torch.cuda.current_stream().wait_stream(self.stream)
@@ -50,12 +56,98 @@ class data_prefetcher():
         return input, target
 
 
-class MyDataset(Dataset):
-    def __init__(self) -> None:
+class PATDataset(Dataset):
+    def __init__(self, path) -> None:
         super().__init__()
+        self.paths = glob(os.path.join(path, '*.npz'))
 
     def __getitem__(self, index):
-        pass
-
+        data = np.load(self.paths[index])
+        sinogram = data['sinogram'].astype(np.float32)
+        gt = data['gt'][None, ...].astype(np.float32)
+        return sinogram, gt
+    
     def __len__(self):
-        pass
+        return len(self.paths)
+
+
+def load_data(args):
+    dataset = PATDataset()
+    train_set, test_set = random_split(
+        dataset, [9, 1]
+    )
+    train_sampler = DistributedSampler(train_set)
+    test_sampler = DistributedSampler(test_set)
+    train_loader = DataLoader(
+        dataset=train_set,
+        batch_size=args.training.batch_size,
+        sampler=train_sampler,
+        num_workers=args.data.num_workers,
+        prefetch_factor=args.data.prefetch_factor,
+        pin_memory=True
+    )
+    test_loader = DataLoader(
+        dataset=test_set,
+        batch_size=args.training.batch_size,
+        sampler=test_sampler,
+        num_workers=args.data.num_workers,
+        prefetch_factor=args.data.prefetch_factor,
+        pin_memory=True
+    )
+    return train_loader, train_sampler, test_loader, test_sampler
+
+
+@torch.no_grad()
+def random_mask(x, axis=2, n_keep=32):
+    mask = torch.zeros_like(x).cpu()
+    mask_axis = random.sample(range(x.shape[axis]), n_keep)
+    mask_shape = [slice(None)] * x.dim()
+    mask_shape[axis] = mask_axis
+    mask[tuple(mask_shape)] = 1.
+
+    return mask.cuda()
+
+@torch.no_grad()
+def uniform_mask(x, axis=2, n_keep=32):
+    mask = torch.zeros_like(x).cpu()
+    mask_axis = max_gap_interval(x.shape[axis], n_keep)
+    mask_shape = [slice(None)] * x.dim()
+    mask_shape[axis] = mask_axis
+    mask[tuple(mask_shape)] = 1.
+
+    return mask.cuda()
+
+@torch.no_grad()
+def limited_view(x, axis=2, n_keep=32):
+    mask = torch.zeros_like(x).cpu()
+    start = random.randint(0, x.shape[axis]-1)
+    mask_axis = [i % x.shape[axis] for i in range(start, start + n_keep)]
+    mask_shape = [slice(None)] * x.dim()
+    mask_shape[axis] = mask_axis
+    mask[tuple(mask_shape)] = 1.
+
+    return mask.cuda()
+
+@torch.no_grad()
+def get_mask_fn(args):
+    mask_type = args.data.mask
+    def mask_fn(x, axis=-1, n_keep=args.data.num_known):
+        if mask_type == 'uniform':
+            mask = uniform_mask(x, axis, n_keep)
+        elif mask_type == 'random':
+            mask = random_mask(x, axis, n_keep)
+        elif mask_type == 'limited':
+            mask = limited_view(x, axis, n_keep)
+        else:
+            raise ValueError(f'Sampling pattern {mask_type} unsupported!')
+
+        x_masked = mask * x
+
+        return x_masked
+    
+    return mask_fn
+    
+def max_gap_interval(n, n_keep):
+    step = n / (n_keep + 1)
+    result = [int(round(step * i)) for i in range(1, n_keep + 1)]
+    return result
