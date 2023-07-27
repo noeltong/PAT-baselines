@@ -26,8 +26,7 @@ def get_config():
     # ----------------
 
     optim = cfg.optim
-    optim.initial_lr = 2.5e-4
-    optim.min_lr = 0
+    optim.initial_lr = 1e-3
     optim.warmup_epochs = None
 
     # ----------------
