@@ -11,7 +11,7 @@ def get_config():
 
     training = cfg.training
     training.num_epochs = 100
-    training.batch_size = 16
+    training.batch_size = 64
 
     # ----------------
     # Model
@@ -19,7 +19,7 @@ def get_config():
 
     model = cfg.model
     model.clip_grad_norm = 1.
-    model.arch = 'Uformer'
+    model.arch = 'UNet'
 
     # ----------------
     # Optimization

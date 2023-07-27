@@ -36,7 +36,7 @@ def get_config():
     data = cfg.data
     data.data_dir = '/root/data/mice/npy/train'
     data.num_known = 32
-    data.mask = 'random_mask'
+    data.mask = 'uniform_mask'
 
     cfg.seed = 42
     cfg.use_deterministic_algorithms = True
