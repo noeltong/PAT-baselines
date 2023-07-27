@@ -1,6 +1,7 @@
 from models.unet import UNet
 from models.uformer import Uformer
 from models.unetppp import UNet_3Plus
+from models.unetpp import UNet_2Plus
 
 def get_arch(arch):
     if arch == 'UNet':
@@ -15,6 +16,8 @@ def get_arch(arch):
         model = Uformer(img_size=128, embed_dim=32, win_size=8, token_projection='linear', token_mlp='leff', depths=[1, 2, 8, 8, 2, 8, 8, 2, 1], modulator=True, dd_in=1)
     elif arch == 'UNet_3P':
         model = UNet_3Plus()
+    elif arch == 'UNet_PP':
+        model = UNet_2Plus()
     else:
         raise Exception("Arch error!")
 
