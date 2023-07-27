@@ -10,7 +10,6 @@ def get_config():
     # ----------------
 
     training = cfg.training
-    training.num_epochs = 100
     training.batch_size = 16
 
     # ----------------
