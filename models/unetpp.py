@@ -9,7 +9,7 @@ from torchvision import models
 
 class UNet_2Plus(nn.Module):
 
-    def __init__(self, in_channels=3, n_classes=1, feature_scale=4, is_deconv=True, is_batchnorm=True, is_ds=True):
+    def __init__(self, in_channels=1, out_channels=1, feature_scale=4, is_deconv=True, is_batchnorm=True, is_ds=True):
         super(UNet_2Plus, self).__init__()
         self.is_deconv = is_deconv
         self.in_channels = in_channels
@@ -49,10 +49,10 @@ class UNet_2Plus(nn.Module):
         self.up_concat04 = unetUp_origin(filters[1], filters[0], self.is_deconv, 5)
 
         # final conv (without any concat)
-        self.final_1 = nn.Conv2d(filters[0], n_classes, 1)
-        self.final_2 = nn.Conv2d(filters[0], n_classes, 1)
-        self.final_3 = nn.Conv2d(filters[0], n_classes, 1)
-        self.final_4 = nn.Conv2d(filters[0], n_classes, 1)
+        self.final_1 = nn.Conv2d(filters[0], out_channels, 1)
+        self.final_2 = nn.Conv2d(filters[0], out_channels, 1)
+        self.final_3 = nn.Conv2d(filters[0], out_channels, 1)
+        self.final_4 = nn.Conv2d(filters[0], out_channels, 1)
 
         # initialise weights
         for m in self.modules():
