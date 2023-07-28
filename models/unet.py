@@ -1,5 +1,6 @@
 import torch
 from torch import nn
+from .init import init_weights
 
 class ConvBlock(nn.Module):
     def __init__(self, in_channel, out_channel, strides=1):
@@ -54,6 +55,12 @@ class UNet(nn.Module):
         self.ConvBlock9 = block(dim*2, dim, strides=1)
 
         self.conv10 = nn.Conv2d(dim, 1, kernel_size=3, stride=1, padding=1)
+
+        for m in self.modules():
+            if isinstance(m, nn.Conv2d):
+                init_weights(m, init_type='kaiming')
+            elif isinstance(m, nn.BatchNorm2d):
+                init_weights(m, init_type='kaiming')
 
     def forward(self, x):
         conv1 = self.ConvBlock1(x)
