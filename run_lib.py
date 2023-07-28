@@ -180,6 +180,10 @@ def train(args, work_dir):
             optimizer.zero_grad()
             scaler.scale(loss).backward()
 
+            if args.model.clip_grad_norm is not None:
+                scaler.unscale_(optimizer)
+                nn.utils.clip_grad_norm_(model.parameters(), args.model.clip_grad_norm)
+
             scaler.step(optimizer)
             scaler.update()
 
